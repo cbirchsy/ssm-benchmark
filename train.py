@@ -179,9 +179,8 @@ if __name__ == "__main__":
 
     # start wandb logging
     if wandb_config is not None:
-        wandb.login(key=wandb_config["key"])
+        wandb.login()
         wandb.init(
-                entity=wandb_config["entity"],
                 project=wandb_config["project"],
                 config=args,
                 job_type="train",
