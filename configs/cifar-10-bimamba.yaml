@@ -1,0 +1,29 @@
+seed: 1919
+wandb:
+  project: "Mamba-CIFAR-10"
+dataset:
+  name: "CIFAR-10"
+  _name_: "cifar"
+  grayscale: True
+train:
+  num_epochs: 250
+  batch_size: 50
+  lr: 0.005
+  wd: 0.07
+model:
+  layer: "mamba"
+  num_blocks: 6
+  input_dim: 1
+  output_dim: 10
+  hidden_dim: 512
+  state_dim: 256
+  conv_dim: 4
+  expansion: 2
+  dropout: 0.1
+  glu: True
+  norm: 'layer'
+  dual: False
+  prenorm: False
+  pooling: "mean"
+  bidirectional: true
+  bidirectional_strategy: concat
