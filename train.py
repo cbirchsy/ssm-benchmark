@@ -16,7 +16,7 @@ def train_mamba(seed, trainloader, testloader, wandb_config, train_config, model
     if wandb_config is not None:
         wandb.log({"params": nr_params})
     optimizer = torch.optim.AdamW(model.parameters(), lr=train_config["lr"], weight_decay=train_config["wd"])
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=train_config["num_epochs"], eta_min = 5e-6)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=train_config["num_epochs"], eta_min = train_config["eta_min"])
     running_loss = 0.0
     for epoch in range(train_config["num_epochs"]):
         for X, y, _ in tqdm(trainloader):
