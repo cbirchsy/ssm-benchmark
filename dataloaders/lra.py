@@ -219,6 +219,12 @@ class TabularDataset(torch.utils.data.Dataset):
 def listops_tokenizer(s):
     return s.translate({ord("]"): ord("X"), ord("("): None, ord(")"): None}).split()
 
+# LRA tokenizer renames ']' to 'X' and delete parentheses as their tokenizer removes
+# non-alphanumeric characters.
+# https://github.com/google-research/long-range-arena/blob/264227cbf9591e39dd596d2dc935297a2070bdfe/lra_benchmarks/listops/input_pipeline.py#L46
+def listops_tokenizer(s):
+    return s.translate({ord("]"): ord("X"), ord("("): None, ord(")"): None}).split()
+
 
 class ListOps(SequenceDataset):
     _name_ = "listops"
@@ -229,7 +235,6 @@ class ListOps(SequenceDataset):
     def init_defaults(self):
         return {
             "l_max": 2048,
-            "fixed_size": False,
             "append_bos": False,
             "append_eos": True,
             # 'max_vocab': 20, # Actual size 18
@@ -284,10 +289,8 @@ class ListOps(SequenceDataset):
             xs = nn.utils.rnn.pad_sequence(
                 xs, padding_value=self.vocab["<pad>"], batch_first=True
             )
-            if self.fixed_size:
-                xs = nn.ConstantPad1d((0, self.l_max - xs.shape[1]), self.vocab["<pad>"])(xs)
             ys = torch.tensor(ys)
-            return xs.float()[:,:,None], ys, {"lengths": lengths}
+            return xs, ys, {"lengths": lengths}
 
         self._collate_fn = collate_batch
 
