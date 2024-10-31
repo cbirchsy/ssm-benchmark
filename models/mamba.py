@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 from mamba_ssm import Mamba as MambaLayer
-
+from mamba_ssm import Mamba2 as Mamba2Layer
 
 from models import MATCH
 
@@ -14,16 +14,23 @@ class GLU(torch.nn.Module):
         return out[:, :, :x.shape[2]] * torch.sigmoid(out[:, :, x.shape[2]:])
 
 class MambaBlock(torch.nn.Module):
-    def __init__(self, hidden_dim, state_dim, conv_dim, expansion, dropout, glu, norm, prenorm, bidirectional=True, bidirectional_strategy='concat', tie_weights=True):
+    def __init__(self, hidden_dim, state_dim, conv_dim, expansion, dropout, glu, norm, prenorm, bidirectional=True, bidirectional_strategy='concat', tie_weights=True, mamba2=True):
         super().__init__()
         self.bidirectional = bidirectional
         self.bidirectional_strategy = bidirectional_strategy
         self.tie_weights = tie_weights
         if self.bidirectional_strategy == 'concat':
             self.dim_reduce = nn.Linear(2*hidden_dim, hidden_dim)
-        self.mamba = MambaLayer(d_model=hidden_dim, d_state=state_dim, d_conv=conv_dim, expand=expansion)
+        if mamba2:
+            self.mamba = Mamba2Layer(d_model=hidden_dim, d_state=state_dim, d_conv=conv_dim, expand=expansion)
+        else:
+            self.mamba = MambaLayer(d_model=hidden_dim, d_state=state_dim, d_conv=conv_dim, expand=expansion)
+            
         if not self.tie_weights:
-            self.mamba_rev = MambaLayer(d_model=hidden_dim, d_state=state_dim, d_conv=conv_dim, expand=expansion)
+            if mamba2:
+                self.mamba_rev = Mamba2Layer(d_model=hidden_dim, d_state=state_dim, d_conv=conv_dim, expand=expansion)
+            else:
+                self.mamba_rev = MambaLayer(d_model=hidden_dim, d_state=state_dim, d_conv=conv_dim, expand=expansion)
         if glu:
             self.glu = GLU(hidden_dim)
         else:
@@ -72,7 +79,7 @@ class MambaBlock(torch.nn.Module):
     
 class Mamba(torch.nn.Module):
     def __init__(self, num_blocks, input_dim, output_dim, hidden_dim, state_dim, conv_dim, expansion, dropout, glu, norm, prenorm, dual, pooling="mean", 
-                 bidirectional=True, bidirectional_strategy='concat', tie_weights=True, tokenized_inputs=False):
+                 bidirectional=True, bidirectional_strategy='concat', tie_weights=True, tokenized_inputs=False, mamba2=True):
         super().__init__()
         self.tokenized_inputs = tokenized_inputs
         if self.tokenized_inputs:
@@ -80,7 +87,7 @@ class Mamba(torch.nn.Module):
         else:
             self.encoder = nn.Linear(input_dim, hidden_dim)
         self.blocks = nn.Sequential(*[MambaBlock(hidden_dim, state_dim, conv_dim, expansion, dropout, glu, norm, prenorm, 
-                                                 bidirectional=bidirectional, bidirectional_strategy=bidirectional_strategy, tie_weights=tie_weights
+                                                 bidirectional=bidirectional, bidirectional_strategy=bidirectional_strategy, tie_weights=tie_weights, mamba2=mamba2
                                                 ) for _ in range(num_blocks)])
         self.linear_decoder = nn.Linear(hidden_dim, output_dim)
         self.pooling = pooling
