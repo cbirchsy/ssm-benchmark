@@ -7,16 +7,16 @@ dataset:
 train:
   num_epochs: 50
   batch_size: 64
-  lr: 0.001
+  lr: 0.0001
   wd: 0.01
-  eta_min: 0.00005
+  eta_min: 0.00001
 model:
   layer: "mamba"
   num_blocks: 8
   input_dim: 20
   output_dim: 10
-  hidden_dim: 128
-  state_dim: 64
+  hidden_dim: 256
+  state_dim: 128
   conv_dim: 3
   expansion: 2
   dropout: 0.1
@@ -29,3 +29,4 @@ model:
   bidirectional_strategy: 'concat'
   tie_weights: False
   tokenized_inputs: True
+  mamba2: True
